@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-8 min-h-screen bg-black flex items-center justify-center">
+    
+    <div class="w-full max-w-md bg-zinc-950/50 p-10 rounded-2xl border border-white/5 shadow-2xl">
+        <div class="text-center mb-10">
+            <h1 class="text-white font-extrabold text-4xl mb-3 tracking-tight">Create Account</h1>
+            <p class="text-zinc-500 text-sm">Join Streaming Star to start your 4K experience.</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div>
+                <label class="block text-white text-[10px] font-bold uppercase tracking-widest mb-2 px-1">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                    <p class="text-[#FFA629] text-[10px] mt-1 font-bold">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" 
+                    class="w-full bg-[#FFA629] text-white font-extrabold py-4 rounded-xl mt-4 hover:bg-[#FF9500] transition active:scale-[0.98]">
+                SIGN UP
+            </button>
+        </form>
+
+        <div class="mt-10 text-center border-t border-white/5 pt-6">
+            <p class="text-zinc-500 text-xs">
+                Already have an account? 
+                <a href="{% url 'login' %}" class="text-white font-bold hover:text-[#FFA629] transition">Login here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styling for the dynamically generated Django inputs */
+    input {
+        width: 100%;
+        background-color: #09090b; /* matches zinc-950 */
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 0.75rem; 
+        padding: 1rem 1.25rem;
+        color: white;
+        outline: none;
+        transition: all 0.2s;
+    }
+    input:focus {
+        border-color: #FFA629; /* Primary Brand Color */
+        box-shadow: 0 0 0 2px rgba(255, 166, 41, 0.2);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pt-40 pb-20 px-4 bg-black min-h-screen text-white flex flex-col items-center font-sans">
+    
+    <h1 class="text-white font-bold text-5xl mb-2 text-center">
+        Subscribed to the {{ plan.name }} plan
+    </h1>
+    <p class="text-white font-semibold text-2xl mb-12">
+        ₹{{ display_amount }}/month
+    </p>
+
+    <button id="pay-btn" class="w-full max-w-lg bg-[#FFA52F] text-white font-bold py-4 rounded-xl text-xl hover:bg-[#FF9500] transition shadow-lg">
+        Pay ₹{{ display_amount }} with Razorpay
+    </button>
+
+    <div class="my-8 text-[#FFA52F] font-bold text-lg">Or</div>
+
+    <div class="w-full max-w-6xl">
+        <input type="email" value="{{ user.email }}" placeholder="Email" 
+               class="w-full p-4 rounded-lg bg-[#E5E5E5] text-zinc-800 placeholder-zinc-500 focus:outline-none border-none text-lg">
+    </div>
+
+    <div class="w-full max-w-6xl mt-10">
+        <h2 class="text-[#FFA52F] font-bold text-4xl text-left uppercase tracking-tight">Payment Method</h2>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key": "{{ razorpay_key }}", 
+        "amount": "{{ amount }}", // Dynamic amount in paise passed from view
+        "currency": "INR",
+        "name": "Streaming Star",
+        "description": "{{ plan.name }} Subscription",
+        "order_id": "{{ order_id }}",
+        "handler": function (response){
+            window.location.href = `/payment-verify/?payment_id=${response.razorpay_payment_id}&order_id=${response.razorpay_order_id}&signature=${response.razorpay_signature}`;
+        },
+        "prefill": {
+            "name": "{{ user.get_full_name }}",
+            "email": "{{ user.email }}"
+        },
+        "theme": { "color": "#FFA52F" } 
+    };
+    
+    var rzp1 = new Razorpay(options);
+    
+    document.getElementById('pay-btn').onclick = function(e){
+        rzp1.open();
+        e.preventDefault();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-8 md:px-16 lg:px-24 bg-black min-h-screen font-sans">
+    <div class="max-w-5xl mx-auto">
+        
+        <div class="flex flex-col md:flex-row items-center gap-8 mb-16 border-b border-white/5 pb-12">
+            <div class="w-32 h-32 rounded-2xl bg-[#FFA52F] text-white flex items-center justify-center text-5xl font-black shadow-2xl shadow-[#FFA52F]/20">
+                {{ user.first_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+            </div>
+            <div class="text-center md:text-left">
+                <h1 class="text-white font-bold text-4xl mb-2 tracking-tight">
+                    {{ user.get_full_name|default:user.username }}
+                </h1>
+                <p class="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-4">
+                    {{ user.email }}
+                </p>
+                
+                {% if is_subscribed %}
+                    <span class="bg-[#FFA52F]/10 text-[#FFA52F] border border-[#FFA52F]/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                        Premium Member
+                    </span>
+                {% else %}
+                    <span class="bg-zinc-800 text-zinc-400 border border-white/5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                        Free User
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div class="lg:col-span-2 space-y-10">
+                <section>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-white font-bold text-xl flex items-center gap-2">
+                            <i class='bx bx-lock-alt text-[#FFA52F]'></i> Account Details
+                        </h3>
+                        <span class="text-zinc-600 text-[10px] uppercase font-bold tracking-widest italic">Locked</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Full Name</label>
+                            <div class="w-full bg-[#09090b] border border-white/5 rounded-sm py-4 px-5 text-zinc-300 font-medium cursor-not-allowed">
+                                {{ user.get_full_name|default:"Not Provided" }}
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Email Address</label>
+                            <div class="w-full bg-[#09090b] border border-white/5 rounded-sm py-4 px-5 text-zinc-300 font-medium cursor-not-allowed">
+                                {{ user.email }}
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Mobile Number</label>
+                            <div class="w-full bg-[#09090b] border border-white/5 rounded-sm py-4 px-5 text-zinc-300 font-medium cursor-not-allowed">
+                                {{ user.profile.mobile|default:"Not Linked" }}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="space-y-8">
+                <div class="bg-zinc-950 border border-white/10 rounded-sm p-8 shadow-xl">
+                    <h4 class="text-white font-bold text-lg mb-6 border-b border-white/5 pb-2">Plan Details</h4>
+                    
+                    {% if is_subscribed %}
+                        <div class="mb-6">
+                            <p class="text-[#FFA52F] font-black text-3xl uppercase tracking-tighter">Premium</p>
+                            <p class="text-zinc-500 text-xs mt-2">4K + HDR Streaming</p>
+                            
+                            <div class="mt-8 pt-6 border-t border-white/5 space-y-4">
+                                <div>
+                                    <p class="text-zinc-500 text-[10px] uppercase font-bold">Billing Cycle</p>
+                                    <p class="text-white text-sm">Monthly (₹1999)</p>
+                                </div>
+                                <div>
+                                    <p class="text-zinc-500 text-[10px] uppercase font-bold">Next Renewal</p>
+                                    <p class="text-white text-sm">March 21, 2026</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-zinc-900 text-white font-bold py-3 rounded-lg text-xs hover:bg-zinc-800 transition border border-white/5">
+                            Manage Billing
+                        </button>
+                    {% else %}
+                        <div class="mb-6">
+                            <p class="text-zinc-500 font-black text-3xl uppercase tracking-tighter">Free</p>
+                            <p class="text-zinc-600 text-xs mt-2">Upgrade to remove ads.</p>
+                        </div>
+                        <a href="{% url 'subscription' %}" 
+                           class="block text-center bg-[#FFA52F] text-white font-bold py-4 rounded-lg text-sm hover:brightness-110 transition shadow-lg shadow-[#FFA52F]/10">
+                            UPGRADE NOW
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

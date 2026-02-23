@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="bg-black min-h-screen text-white pt-24 pb-12 px-4 md:px-10">
+
+{% for genre in genres %}
+<section class="mb-12 relative group">
+
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+      <i class='bx {{ genre.icon_class }} text-yellow-400'></i>
+      {{ genre.name }}
+    </h2>
+
+    <a href="{% url 'category_list' 'movies' %}?genre={{ genre.name }}"
+       class="text-[#FFB800] text-sm font-bold hover:text-yellow-300 transition">
+       SEE ALL
+    </a>
+  </div>
+
+  <button onclick="scrollContainer('genre{{ genre.id }}', -400)" 
+          class="scroll-btn left-2 opacity-100">
+    <i class="bx bx-chevron-left text-2xl"></i>
+  </button>
+  
+  <button onclick="scrollContainer('genre{{ genre.id }}', 400)" 
+          class="scroll-btn right-2 opacity-100">
+    <i class="bx bx-chevron-right text-2xl"></i>
+  </button>
+
+  <div id="genre{{ genre.id }}" class="scroll-row">
+
+    {% for movie in genre.movie_set.all %}
+    <a href="{% url 'movie_detail' movie.id %}" class="movie-card flex-shrink-0">
+
+      <div class="poster-wrapper rounded-lg overflow-hidden border border-white/10">
+        <img src="{{ movie.poster.url }}"
+             class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+      </div>
+
+      <h4 class="mt-2 text-xs font-bold truncate">{{ movie.title }}</h4>
+      <p class="text-[11px] text-white/60">{{ movie.year }}</p>
+
+    </a>
+    {% empty %}
+      <p class="text-zinc-500">No movies in this genre</p>
+    {% endfor %}
+
+  </div>
+</section>
+{% endfor %}
+
+</div>
+
+<script>
+function scrollContainer(containerId, scrollAmount) {
+    const container = document.getElementById(containerId);
+    if (container) {
+        container.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Keep old function names for compatibility
+function scrollLeft(id) { scrollContainer(id, -400); }
+function scrollRight(id) { scrollContainer(id, 400); }
+</script>
+
+<style>
+.scroll-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 10px 0;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scroll-row::-webkit-scrollbar {
+    display: none;
+}
+
+.movie-card {
+    width: 150px;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.poster-wrapper {
+    aspect-ratio: 2/3;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Updated Scroll Button Style: Always Visible & High Contrast */
+.scroll-btn {
+    position: absolute;
+    top: 55%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8) !important; /* Semi-transparent black */
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 9999px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle white border */
+    transition: all 0.3s ease;
+    opacity: 1 !important; /* Forces visibility */
+}
+
+.scroll-btn:hover {
+    background: #FFB800 !important;
+    color: black;
+    border-color: #FFB800;
+    transform: translateY(-50%) scale(1.1);
+}
+
+@media (min-width: 768px) {
+    .movie-card { width: 180px; }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pt-32 pb-20 px-8 md:px-16 bg-black min-h-screen flex flex-col items-center font-sans">
+    
+    <h1 class="text-white font-bold text-5xl mb-12 tracking-tight">Pricing and Plans</h1>
+
+    <div class="flex bg-zinc-500/50 p-1 rounded-full mb-16 w-80 shadow-2xl border border-white/10">
+        <button id="monthly-btn" class="flex-1 py-3 px-6 rounded-full bg-white text-black font-bold text-xl transition-all duration-300">
+            Monthly
+        </button>
+        <button id="yearly-btn" class="flex-1 py-3 px-6 rounded-full text-zinc-800 font-bold text-xl transition-all duration-300">
+            Yearly
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-7xl items-end">
+        
+        <div class="border border-white/60 rounded-sm p-8 flex flex-col bg-black h-fit">
+            <div class="text-center">
+                <h2 class="text-white font-bold text-4xl mb-1">Basic</h2>
+                <p class="text-white font-medium text-xl mb-6">₹599/month</p>
+                <button class="w-full bg-[#FFA52F] text-white font-semibold py-3 rounded-lg mb-10 hover:bg-[#FF9500] transition">
+                    <a href="{% url 'payment_page' 'basic' %}" class="w-full block text-center bg-[#FFA52F] text-white font-semibold py-3 rounded-lg mb-10">
+                        Select Basic
+                    </a>
+                </button>
+            </div>
+            <ul class="space-y-6">
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Good vedio quality (720p)
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> WAtch on 1 screen
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Unlimited movies & Tv shows
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Ad-free Experience
+                </li>
+            </ul>
+        </div>
+
+        <div class="border border-white/80 rounded-sm p-8 flex flex-col bg-black h-fit">
+            <div class="text-center">
+                <h2 class="text-white font-bold text-4xl mb-1">Standard</h2>
+                <p class="text-white font-medium text-xl mb-6">₹1599/month</p>
+                <button class="w-full bg-[#FFA52F] text-white font-semibold py-3 rounded-lg mb-10 hover:bg-[#FF9500] transition">
+                    <a href="{% url 'payment_page' 'standard' %}" class="w-full block text-center bg-[#FFA52F] text-white font-semibold py-3 rounded-lg mb-10">
+                        Select Standard
+                    </a>
+                </button>
+            </div>
+            <ul class="space-y-6">
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Good vedio quality (1080p)
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Watch on 2 screen
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Unlimited movies & Tv shows
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Download on 2 devices
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Ad-free Experience
+                </li>
+            </ul>
+        </div>
+
+        <div class="border border-white rounded-sm p-10 flex flex-col bg-black scale-y-110 origin-bottom shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+            <div class="text-center">
+                <h2 class="text-white font-bold text-4xl mb-1">Premium</h2>
+                <p class="text-white font-medium text-xl mb-6">₹1999/month</p>
+                <button class="w-full bg-[#FFA52F] text-white font-semibold py-3 rounded-lg mb-10 hover:bg-[#FF9500] transition">
+                    <a href="{% url 'payment_page' 'premium' %}" class="w-full block text-center bg-[#FFA52F] text-white font-semibold py-3 rounded-lg mb-10">
+                        Select Premium
+                    </a>
+                </button>
+            </div>
+            <ul class="space-y-6">
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Good vedio quality (4k+HDR)
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Watch on 4 screen
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Unlimited movies & Tv shows
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Download on 2 devices
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Spatials Audios
+                </li>
+                <li class="flex items-center gap-4 text-white text-sm font-medium">
+                    <i class='bx bx-check text-xl'></i> Ad-free Experience
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const monthlyBtn = document.getElementById('monthly-btn');
+    const yearlyBtn = document.getElementById('yearly-btn');
+
+    monthlyBtn.addEventListener('click', () => {
+        monthlyBtn.classList.add('bg-white', 'text-black');
+        monthlyBtn.classList.remove('text-zinc-800');
+        yearlyBtn.classList.remove('bg-white', 'text-black');
+        yearlyBtn.classList.add('text-zinc-800');
+    });
+
+    yearlyBtn.addEventListener('click', () => {
+        yearlyBtn.classList.add('bg-white', 'text-black');
+        yearlyBtn.classList.remove('text-zinc-800');
+        monthlyBtn.classList.remove('bg-white', 'text-black');
+        monthlyBtn.classList.add('text-zinc-800');
+    });
+</script>
+{% endblock %}

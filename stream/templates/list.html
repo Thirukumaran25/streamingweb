@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="bg-black min-h-screen text-white pt-24 pb-16 px-4 md:px-10">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
+    <h1 class="text-2xl md:text-3xl font-black uppercase tracking-wider">
+      {{ display_title }}
+      {% if request.GET.genre %}
+        - {{ request.GET.genre }}
+      {% endif %}
+    </h1>
+
+    <a href="{% url 'movies' %}" class="text-zinc-400 hover:text-white text-sm">
+      ← Back to Movies
+    </a>
+  </div>
+
+  {% if items %}
+
+  <!-- Movie Grid -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+
+    {% for movie in items %}
+    <a href="{% url 'movie_detail' movie.id %}" class="group block">
+
+      <div class="relative aspect-[2/3] rounded-lg overflow-hidden border border-white/10 bg-zinc-900">
+        <img src="{{ movie.poster.url }}"
+             alt="{{ movie.title }}"
+             class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+      </div>
+
+      <div class="mt-2 text-center">
+        <h3 class="text-xs font-bold truncate uppercase">
+          {{ movie.title }}
+        </h3>
+        <p class="text-[11px] text-zinc-400 mt-1">
+          {{ movie.year }}
+        </p>
+      </div>
+
+    </a>
+    {% endfor %}
+
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="text-center py-24">
+    <i class='bx bx-movie-play text-6xl text-zinc-600 mb-4'></i>
+    <p class="text-zinc-400 text-xl">No movies found</p>
+    <p class="text-zinc-500 mt-2">Try another genre</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
