@@ -16,9 +16,9 @@
                     {{ user.email }}
                 </p>
                 
-                {% if is_subscribed %}
+                {% if is_subscribed and subscription %}
                     <span class="bg-[#FFA52F]/10 text-[#FFA52F] border border-[#FFA52F]/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                        Premium Member
+                        {{ subscription.plan_name|upper }} Member
                     </span>
                 {% else %}
                     <span class="bg-zinc-800 text-zinc-400 border border-white/5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -56,7 +56,7 @@
                         <div class="space-y-2">
                             <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Mobile Number</label>
                             <div class="w-full bg-[#09090b] border border-white/5 rounded-sm py-4 px-5 text-zinc-300 font-medium cursor-not-allowed">
-                                {{ user.profile.mobile|default:"Not Linked" }}
+                                {{ mobile|default:"Not Linked" }}
                             </div>
                         </div>
                     </div>
@@ -67,19 +67,25 @@
                 <div class="bg-zinc-950 border border-white/10 rounded-sm p-8 shadow-xl">
                     <h4 class="text-white font-bold text-lg mb-6 border-b border-white/5 pb-2">Plan Details</h4>
                     
-                    {% if is_subscribed %}
+                    {% if is_subscribed and subscription %}
                         <div class="mb-6">
-                            <p class="text-[#FFA52F] font-black text-3xl uppercase tracking-tighter">Premium</p>
-                            <p class="text-zinc-500 text-xs mt-2">4K + HDR Streaming</p>
+                            <p class="text-[#FFA52F] font-black text-3xl uppercase tracking-tighter">
+                                {{ subscription.plan_name|capfirst }}
+                            </p>
+                            <p class="text-zinc-500 text-xs mt-2">
+                                {% if subscription.plan_name == 'basic' %}720p Streaming{% elif subscription.plan_name == 'standard' %}1080p Streaming{% else %}4K + HDR Streaming{% endif %}
+                            </p>
                             
                             <div class="mt-8 pt-6 border-t border-white/5 space-y-4">
                                 <div>
                                     <p class="text-zinc-500 text-[10px] uppercase font-bold">Billing Cycle</p>
-                                    <p class="text-white text-sm">Monthly (₹1999)</p>
+                                    <p class="text-white text-sm">
+                                        {% if subscription.plan_name == 'pro' %}Yearly{% else %}Monthly{% endif %}
+                                    </p>
                                 </div>
                                 <div>
                                     <p class="text-zinc-500 text-[10px] uppercase font-bold">Next Renewal</p>
-                                    <p class="text-white text-sm">March 21, 2026</p>
+                                    <p class="text-white text-sm">{{ subscription.expiry_date|date:"F d, Y" }}</p>
                                 </div>
                             </div>
                         </div>

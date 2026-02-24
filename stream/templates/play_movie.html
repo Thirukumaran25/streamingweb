@@ -1,19 +1,212 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="min-h-screen bg-black flex flex-col items-center justify-center p-6">
+<style>
+    #settingsMenu { animation: slideUp 0.2s ease-out; }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .player-height {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+</style>
 
-    <h1 class="text-white text-3xl font-bold mb-6">{{ movie.title }}</h1>
-
+<div id="videoContainer" class="relative player-height bg-black flex items-center justify-center overflow-hidden group">
+    
     {% if movie.video %}
-        <video controls autoplay class="w-full max-w-5xl rounded-lg shadow-lg">
+        <video id="mainPlayer" playsinline autoplay class="w-full h-full object-contain md:object-cover">
             <source src="{{ movie.video.url }}" type="video/mp4">
-            Your browser does not support video.
         </video>
     {% else %}
-        <p class="text-red-500">No video uploaded for this movie.</p>
+        <div class="text-center text-white"><p class="text-red-500 font-bold">No video found.</p></div>
     {% endif %}
 
+    <div class="absolute inset-0 flex pointer-events-auto z-10">
+        <div id="leftZone" class="w-1/2 h-full flex items-center justify-center">
+            <div id="rewindInd" class="opacity-0 transition-opacity bg-black/40 p-4 md:p-6 rounded-full text-white text-center">
+                <i class='bx bx-chevrons-left text-3xl md:text-4xl'></i>
+                <span class="block text-[8px] md:text-[10px] font-bold">-10s</span>
+            </div>
+        </div>
+        <div id="rightZone" class="w-1/2 h-full flex items-center justify-center">
+            <div id="forwardInd" class="opacity-0 transition-opacity bg-black/40 p-4 md:p-6 rounded-full text-white text-center">
+                <i class='bx bx-chevrons-right text-3xl md:text-4xl'></i>
+                <span class="block text-[8px] md:text-[10px] font-bold">+10s</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="playerOverlay" class="absolute inset-0 z-20 flex flex-col justify-between p-4 md:p-8 bg-gradient-to-t from-black/90 via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        
+        <div class="flex items-center justify-between">
+            <a href="{% url 'movie_detail' movie.id %}" class="flex items-center gap-2 text-white/70 hover:text-white transition group/back">
+                <i class='bx bx-arrow-back text-2xl md:text-3xl transition-transform group-hover/back:-translate-x-1'></i>
+                <span class="text-xs md:text-sm font-bold uppercase tracking-widest hidden sm:block">Back</span>
+            </a>
+            
+            <div class="bg-black/60 border border-yellow-500/30 px-2 py-1 md:px-3 md:py-1.5 flex items-center gap-2 rounded-md">
+                <i class='bx bxs-star text-yellow-500 text-xs md:text-base'></i>
+                <span class="text-[8px] md:text-[10px] font-black text-white italic">STREAMING STAR</span>
+            </div>
+        </div>
+
+        <div class="space-y-4 md:space-y-6 w-full max-w-6xl mx-auto pointer-events-auto">
+            
+            <div class="w-full px-2 md:px-4">
+                <div id="progressContainer" class="relative w-full h-1.5 md:h-2 bg-white/20 rounded-full cursor-pointer">
+                    <div id="progressFill" class="absolute left-0 top-0 h-full bg-orange-500 w-0"></div>
+                    <div id="scrubHandle" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 md:w-5 md:h-5 bg-orange-500 rounded-full shadow-lg" style="left: 0%;"></div>
+                </div>
+                <div class="flex justify-between mt-2 md:mt-3 text-[8px] md:text-[10px] font-black text-white/80 tracking-widest uppercase">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalDuration">0:00</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between px-2 md:px-4 pb-2 md:pb-4">
+                
+                <div class="hidden sm:flex items-center gap-2 md:gap-4 w-1/4">
+                    <i id="volumeBtn" class='bx bxs-volume-full text-orange-500 text-xl md:text-2xl cursor-pointer'></i>
+                    <div id="volumeBar" class="w-16 md:w-24 h-1 bg-white/20 rounded-full relative cursor-pointer">
+                        <div id="volumeFill" class="absolute left-0 top-0 h-full bg-orange-500 w-[70%]"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 md:gap-8 justify-center flex-1 sm:flex-none">
+                    <i class='hidden md:block bx bx-shuffle text-white/40 hover:text-white text-xl cursor-pointer'></i>
+                    <i onclick="stepVideo(-10)" class='bx bx-skip-previous text-white text-3xl md:text-4xl hover:text-orange-500 cursor-pointer'></i>
+                    <button id="playPauseBtn" class="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center bg-white/10 rounded-full border border-white/20 hover:bg-orange-500 hover:text-black transition-all">
+                        <i class='bx bx-pause text-2xl md:text-4xl'></i>
+                    </button>
+                    <i onclick="stepVideo(10)" class='bx bx-skip-next text-white text-3xl md:text-4xl hover:text-orange-500 cursor-pointer'></i>
+                    
+                    <div class="relative">
+                        <i id="settingsBtn" class='bx bx-cog text-white/40 hover:text-white text-xl md:text-2xl cursor-pointer'></i>
+                        <div id="settingsMenu" class="absolute bottom-full right-0 mb-4 w-32 md:w-40 bg-black/95 border border-white/10 rounded-lg hidden">
+                            <div class="p-2 border-b border-white/5 text-[8px] md:text-[9px] text-gray-500 font-bold uppercase">Speed</div>
+                            <div class="flex flex-col">
+                                <button onclick="setSpeed(0.5, this)" class="speed-opt p-2 text-left text-[10px] md:text-xs text-white hover:bg-orange-500 hover:text-black transition">0.5x</button>
+                                <button onclick="setSpeed(1.0, this)" class="speed-opt p-2 text-left text-[10px] md:text-xs text-orange-500 bg-white/5">Normal</button>
+                                <button onclick="setSpeed(2.0, this)" class="speed-opt p-2 text-left text-[10px] md:text-xs text-white hover:bg-orange-500 hover:text-black transition">2.0x</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-4 w-1/4">
+                    <div class="hidden xs:block text-right">
+                        <p class="text-white/30 text-[7px] md:text-[9px] font-black uppercase tracking-widest">In Cinemas</p>
+                        <p class="text-white text-[10px] md:text-sm font-extrabold italic uppercase">7TH FEB 2025</p>
+                    </div>
+                    <button id="fullScreenBtn" class="text-white/60 hover:text-orange-500 transition-colors">
+                        <i class='bx bx-fullscreen text-xl md:text-2xl'></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    const video = document.getElementById('mainPlayer');
+    const videoContainer = document.getElementById('videoContainer');
+    const fullScreenBtn = document.getElementById('fullScreenBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = playPauseBtn.querySelector('i');
+    const progressFill = document.getElementById('progressFill');
+    const scrubHandle = document.getElementById('scrubHandle');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalDurationEl = document.getElementById('totalDuration');
+    const volumeBar = document.getElementById('volumeBar');
+    const volumeFill = document.getElementById('volumeFill');
+    const volumeBtn = document.getElementById('volumeBtn');
+    const volumeText = document.getElementById('volumeText');
+
+    // --- Fullscreen Toggle Logic ---
+    fullScreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            videoContainer.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+            fullScreenBtn.querySelector('i').classList.replace('bx-fullscreen', 'bx-exit-fullscreen');
+        } else {
+            document.exitFullscreen();
+            fullScreenBtn.querySelector('i').classList.replace('bx-exit-fullscreen', 'bx-fullscreen');
+        }
+    });
+
+    // --- Formatting and Updates ---
+    function formatTime(t) {
+        if (isNaN(t)) return "0:00";
+        const m = Math.floor(t / 60), s = Math.floor(t % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    video.addEventListener('timeupdate', () => {
+        const p = (video.currentTime / video.duration) * 100;
+        progressFill.style.width = p + '%';
+        scrubHandle.style.left = p + '%';
+        currentTimeEl.textContent = formatTime(video.currentTime);
+    });
+
+    video.addEventListener('loadedmetadata', () => totalDurationEl.textContent = formatTime(video.duration));
+
+    playPauseBtn.addEventListener('click', () => {
+        if (video.paused) { 
+            video.play(); 
+            playIcon.className = 'bx bx-pause text-2xl md:text-4xl'; 
+        } else { 
+            video.pause(); 
+            playIcon.className = 'bx bx-play text-2xl md:text-4xl'; 
+        }
+    });
+
+    document.getElementById('progressContainer').addEventListener('click', (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        video.currentTime = ((e.pageX - rect.left) / rect.width) * video.duration;
+    });
+
+    function updateVol(l) {
+        video.volume = l;
+        volumeFill.style.width = (l * 100) + '%';
+        if(volumeText) volumeText.textContent = Math.round(l * 100) + '%';
+        volumeBtn.className = l === 0 ? 'bx bxs-volume-mute' : (l < 0.5 ? 'bx bxs-volume-low' : 'bx bxs-volume-full');
+        volumeBtn.classList.add('text-orange-500', 'text-xl', 'md:text-2xl', 'cursor-pointer');
+    }
+
+    volumeBar.addEventListener('click', (e) => {
+        const rect = volumeBar.getBoundingClientRect();
+        updateVol(Math.max(0, Math.min(1, (e.pageX - rect.left) / rect.width)));
+    });
+
+    volumeBtn.addEventListener('click', () => updateVol(video.volume > 0 ? 0 : 0.7));
+
+    let lastL = 0, lastR = 0;
+    const showInd = (el) => { el.style.opacity = '1'; setTimeout(() => el.style.opacity = '0', 500); };
+
+    document.getElementById('leftZone').addEventListener('click', () => {
+        if (Date.now() - lastL < 300) { video.currentTime -= 10; showInd(document.getElementById('rewindInd')); }
+        lastL = Date.now();
+    });
+    document.getElementById('rightZone').addEventListener('click', () => {
+        if (Date.now() - lastR < 300) { video.currentTime += 10; showInd(document.getElementById('forwardInd')); }
+        lastR = Date.now();
+    });
+
+    document.getElementById('settingsBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('settingsMenu').classList.toggle('hidden');
+    });
+    function setSpeed(r, el) {
+        video.playbackRate = r;
+        document.querySelectorAll('.speed-opt').forEach(b => b.classList.remove('text-orange-500', 'bg-white/5'));
+        el.classList.add('text-orange-500', 'bg-white/5');
+    }
+    document.addEventListener('click', () => document.getElementById('settingsMenu').classList.add('hidden'));
+
+    function stepVideo(s) { video.currentTime += s; }
+</script>
 
 {% endblock %}

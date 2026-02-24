@@ -1,59 +1,79 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="pt-32 pb-20 px-8 min-h-screen bg-black flex items-center justify-center">
-    
-    <div class="w-full max-w-md bg-zinc-950/50 p-10 rounded-2xl border border-white/5 shadow-2xl">
-        <div class="text-center mb-10">
-            <h1 class="text-white font-extrabold text-4xl mb-3 tracking-tight">Create Account</h1>
-            <p class="text-zinc-500 text-sm">Join Streaming Star to start your 4K experience.</p>
+<style>
+    /* Light-white inputs */
+    input {
+        width: 100%;
+        background-color: #f0f2f5 !important;
+        border: 2px solid transparent;
+        border-radius: 0.75rem; 
+        padding: 0.75rem 1.25rem;
+        color: #000000 !important;
+        font-weight: 700;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    input:focus {
+        border-color: #FFA629;
+        background-color: #ffffff !important;
+        box-shadow: 0 0 15px rgba(255, 166, 41, 0.2);
+    }
+    input::placeholder { color: #94a3b8; font-style: italic; }
+</style>
+
+<div class="pt-6 px-4 md:px-8 min-h-screen bg-black flex items-center justify-center">
+    <div class="w-full max-w-md bg-zinc-950/50 p-6 sm:p-10 rounded-2xl border border-white/5 shadow-2xl">
+        <div class="text-center mb-8">
+            <h1 class="text-white font-extrabold text-3xl md:text-4xl uppercase tracking-tight">Create Account</h1>
         </div>
 
-        <form method="POST" class="space-y-6">
+        <form method="POST" class="space-y-5 md:space-y-6">
             {% csrf_token %}
             
             {% for field in form %}
-            <div>
-                <label class="block text-white text-[10px] font-bold uppercase tracking-widest mb-2 px-1">
+            <div class="relative">
+                <label class="block text-white text-[10px] font-black uppercase tracking-widest mb-2 px-1">
                     {{ field.label }}
                 </label>
-                {{ field }}
+                
+                <div class="relative">
+                    {{ field }}
+                    
+                    {% if field.name == 'password' %}
+                    <button type="button" onclick="toggleRegPassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-black transition">
+                        <i id="regToggleIcon" class='bx bx-show text-xl'></i>
+                    </button>
+                    {% endif %}
+                </div>
+                
                 {% if field.errors %}
-                    <p class="text-[#FFA629] text-[10px] mt-1 font-bold">{{ field.errors.0 }}</p>
+                    <p class="text-[#FFA629] text-[9px] md:text-[10px] mt-1.5 font-bold uppercase tracking-tight">
+                        <i class='bx bx-error-circle'></i> {{ field.errors.0 }}
+                    </p>
                 {% endif %}
             </div>
             {% endfor %}
 
-            <button type="submit" 
-                    class="w-full bg-[#FFA629] text-white font-extrabold py-4 rounded-xl mt-4 hover:bg-[#FF9500] transition active:scale-[0.98]">
+            <button type="submit" class="w-full bg-[#FFA629] text-black font-black py-3 md:py-4 rounded-xl mt-4 hover:brightness-110 transition active:scale-[0.98] tracking-widest uppercase">
                 SIGN UP
             </button>
         </form>
-
-        <div class="mt-10 text-center border-t border-white/5 pt-6">
-            <p class="text-zinc-500 text-xs">
-                Already have an account? 
-                <a href="{% url 'login' %}" class="text-white font-bold hover:text-[#FFA629] transition">Login here</a>
-            </p>
-        </div>
     </div>
 </div>
 
-<style>
-    /* Styling for the dynamically generated Django inputs */
-    input {
-        width: 100%;
-        background-color: #09090b; /* matches zinc-950 */
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 0.75rem; 
-        padding: 1rem 1.25rem;
-        color: white;
-        outline: none;
-        transition: all 0.2s;
+<script>
+    function toggleRegPassword() {
+        const passwordInput = document.getElementById('regPassword');
+        const toggleIcon = document.getElementById('regToggleIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.replace('bx-show', 'bx-hide');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.replace('bx-hide', 'bx-show');
+        }
     }
-    input:focus {
-        border-color: #FFA629; /* Primary Brand Color */
-        box-shadow: 0 0 0 2px rgba(255, 166, 41, 0.2);
-    }
-</style>
+</script>
 {% endblock %}

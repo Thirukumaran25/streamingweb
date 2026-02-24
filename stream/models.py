@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.utils import timezone
+import datetime
 
 # Create your models here.
 
@@ -64,3 +67,27 @@ class MyList(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.movie.title}"
+    
+
+class Subscription(models.Model):
+    PLAN_CHOICES = [
+        ('basic', 'Basic'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
+        ('pro', 'Pro'),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    plan_name = models.CharField(max_length=20, choices=PLAN_CHOICES)
+    order_id = models.CharField(max_length=100)
+    payment_id = models.CharField(max_length=100)
+    active = models.BooleanField(default=False)
+    start_date = models.DateTimeField(auto_now_add=True)
+    expiry_date = models.DateTimeField()
+
+    def __str__(self):
+        return f"{self.user.email} - {self.plan_name}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expiry_date

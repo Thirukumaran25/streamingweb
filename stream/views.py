@@ -7,34 +7,39 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.http import JsonResponse
-from .models import Profile,Movie,Genre,Cast,MyList
+from .models import Profile,Movie,Genre,Cast,MyList,Subscription
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 import razorpay
 from django.core.cache import cache
 from .forms import RegisterForm
 from django.views.decorators.http import require_POST
+import datetime
+from django.utils import timezone
 
 
 # Create your views here.
 
 def home(request):
     featured = Movie.objects.filter(is_featured=True).first()
+    is_in_list = False
+    if request.user.is_authenticated and featured:
+        is_in_list = MyList.objects.filter(user=request.user, movie=featured).exists()
+
     movies = Movie.objects.filter(category='movie')
     tv_shows = Movie.objects.filter(category='tv')
-    continue_watching = Movie.objects.all()[:5] 
+
     my_list = []
     if request.user.is_authenticated:
         my_list = MyList.objects.filter(user=request.user).select_related('movie')
-    
-    genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Thriller', 'Romance', 'Animation']
 
     context = {
-        'featured': Movie.objects.filter(is_featured=True).first(),
-        'movies': Movie.objects.filter(category='movie'),
-        'tv_shows': Movie.objects.filter(category='tv'),
+        'featured': featured,
+        'movies': movies,
+        'tv_shows': tv_shows,
         "my_list": my_list,
-        'genres': Genre.objects.all(), 
+        'is_in_list': is_in_list, # This now refers to the featured movie
+        'genres': Genre.objects.all(),
     }
     return render(request, 'home.html', context)
 
@@ -50,6 +55,16 @@ def movies_page(request):
 @login_required(login_url='login')
 def play_movie(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
+    subscription = Subscription.objects.filter(user=request.user, active=True).first()
+    if not subscription or subscription.expiry_date < timezone.now():
+        user_profile = request.user.profile
+        if user_profile.is_subscribed:
+            user_profile.is_subscribed = False
+            user_profile.save()
+            
+        messages.warning(request, "Please subscribe to a plan to watch this movie.")
+        return redirect('subscription')
+
     return render(request, 'play_movie.html', {'movie': movie})
 
 def Tv_shows(request):
@@ -66,21 +81,31 @@ def genre(request):
 def movie_detail(request, pk):
     movie = get_object_or_404(Movie, pk=pk)
     cast_list = movie.moviecast_set.all() 
-    return render(request, 'detail.html', {'movie': movie, 'cast_list': cast_list})
+    
+    similar_movies = Movie.objects.filter(
+        genre=movie.genre
+    ).exclude(id=movie.id)[:6]  
+
+    is_in_list = False
+    if request.user.is_authenticated:
+        is_in_list = MyList.objects.filter(user=request.user, movie=movie).exists()
+
+    context = {
+        'movie': movie, 
+        'cast_list': cast_list,
+        'is_in_list': is_in_list,
+        'similar_movies': similar_movies,
+    } 
+    return render(request, 'detail.html', context)
 
 
 def category_list(request, category_name):
     db_category = 'movie' if category_name == 'movies' else 'tv'
-
     genre_name = request.GET.get('genre')
-
     items = Movie.objects.filter(category=db_category)
-
     if genre_name:
         items = items.filter(genre__name=genre_name)
-
     display_title = "Movies" if db_category == 'movie' else "TV Shows"
-
     return render(request, 'list.html', {
         'items': items,
         'display_title': display_title,
@@ -99,51 +124,51 @@ def my_list(request):
 @require_POST
 def toggle_my_list(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
-
     obj = MyList.objects.filter(user=request.user, movie=movie)
 
     if obj.exists():
         obj.delete()
+        messages.info(request, f"Removed {movie.title} from your list.")
     else:
         MyList.objects.create(user=request.user, movie=movie)
+        messages.success(request, f"Added {movie.title} to your list.")
 
-    return redirect('my_list')
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
 def search_api(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     results = []
     
-    if len(query) > 2:
+    if len(query) >= 2:
+        # Fixed: Changed 'genres' to 'genre' based on your model choices
         movies = Movie.objects.filter(
             Q(title__icontains=query) | 
             Q(director__icontains=query) |
-            Q(genres__name__icontains=query) |
+            Q(genre__name__icontains=query) | # Changed from genres__name
             Q(cast_members__real_name__icontains=query)
-        ).distinct()[:12]
+        ).distinct()[:15]
         
         for movie in movies:
             results.append({
                 'Title': movie.title,
-                'Poster': movie.poster.url if movie.poster else 'N/A',
+                'Poster': movie.poster.url if movie.poster else 'https://via.placeholder.com/300x450',
                 'imdbID': movie.id,
-                'Year': movie.year if movie.year else ""
+                'Year': str(movie.year) if movie.year else ""
             })
             
     return JsonResponse({'results': results})
-
 
 def get_suggestions(request):
     query = request.GET.get('q', '').strip()
     suggestions = set()
 
-    if len(query) > 1:
-        directors = Movie.objects.filter(director__icontains=query).values_list('director', flat=True)[:3]
-        suggestions.update(directors)
-        cast = Cast.objects.filter(real_name__icontains=query).values_list('real_name', flat=True)[:3]
-        suggestions.update(cast)
-        genres = Genre.objects.filter(name__icontains=query).values_list('name', flat=True)[:3]
-        suggestions.update(genres)
+    if len(query) >= 2:
+        # Get matching metadata for quick selection
+        suggestions.update(Movie.objects.filter(director__icontains=query).values_list('director', flat=True)[:2])
+        suggestions.update(Cast.objects.filter(real_name__icontains=query).values_list('real_name', flat=True)[:2])
+        suggestions.update(Genre.objects.filter(name__icontains=query).values_list('name', flat=True)[:2])
+        
     return JsonResponse({'suggestions': list(suggestions)[:6]})
 
 
@@ -185,6 +210,20 @@ def logout_view(request):
     logout(request)
     return render(request, 'logout.html')
 
+@login_required
+def profile_view(request):
+    user_profile = request.user.profile
+    subscription = Subscription.objects.filter(user=request.user, active=True).first()
+    
+    context = {
+        'user': request.user,
+        'is_subscribed': user_profile.is_subscribed,
+        'subscription': subscription,
+        'mobile': user_profile.mobile,
+    }
+    return render(request, 'profile.html', context)
+
+
 def subscription(request):
     return render(request, 'subscription.html')
 
@@ -194,18 +233,24 @@ def payment_page(request, plan_name):
         'basic': {'name': 'Basic', 'price': 599},
         'standard': {'name': 'Standard', 'price': 1599},
         'premium': {'name': 'Premium', 'price': 1999},
+        'pro': {'name': 'Pro', 'price': 19999},
     }
 
     selected_plan = plan_map.get(plan_name.lower(), plan_map['basic'])
     amount_in_paise = selected_plan['price'] * 100
+    
+    request.session['selected_plan_name'] = selected_plan['name']
+    request.session['selected_plan_price'] = f"{selected_plan['price']}.00"
+
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
     data = {
         "amount": amount_in_paise,
         "currency": "INR",
-        "receipt": f"receipt_{plan_name}",
+        "receipt": f"receipt_{plan_name}_{request.user.id}",
         "payment_capture": 1 
     }
+    
     order = client.order.create(data=data)
 
     context = {
@@ -216,17 +261,6 @@ def payment_page(request, plan_name):
         'razorpay_key': settings.RAZORPAY_KEY_ID,
     }
     return render(request, 'payment_page.html', context)
-
-
-@login_required
-def profile_view(request):
-    user_profile = request.user.profile
-    context = {
-        'user': request.user,
-        'is_subscribed': user_profile.is_subscribed,
-        'mobile': user_profile.mobile,
-    }
-    return render(request, 'profile.html', context)
 
 
 def create_subscription_order(request):
@@ -251,6 +285,7 @@ def create_subscription_order(request):
 
 def payment_verify(request):
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    
     params_dict = {
         'razorpay_order_id': request.GET.get('order_id'),
         'razorpay_payment_id': request.GET.get('payment_id'),
@@ -259,13 +294,42 @@ def payment_verify(request):
 
     try:
         client.utility.verify_payment_signature(params_dict)
-        messages.success(request, "Payment successful! Welcome to Streaming Star.")
-        return render(request, 'payment_success.html', {'payment_id': params_dict['razorpay_payment_id']})
+        
+        plan_name = request.session.get('selected_plan_name', 'Standard').lower()
+        amount = request.session.get('selected_plan_price', '1599.00')
+        
+        if plan_name == 'pro':
+            expiry = timezone.now() + datetime.timedelta(days=365)
+            billing_type = 'Yearly'
+        else:
+            expiry = timezone.now() + datetime.timedelta(days=30)
+            billing_type = 'Monthly'
+
+        sub, created = Subscription.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'plan_name': plan_name,
+                'order_id': params_dict['razorpay_order_id'],
+                'payment_id': params_dict['razorpay_payment_id'],
+                'active': True,
+                'expiry_date': expiry
+            }
+        )
+
+        user_profile = request.user.profile
+        user_profile.is_subscribed = True
+        user_profile.save()
+
+        context = {
+            'payment_id': params_dict['razorpay_payment_id'],
+            'plan_name': plan_name.capitalize() + " plan",
+            'amount': amount,
+            'billing_type': billing_type,
+            'next_payment': expiry.strftime('%b %d, %Y')
+        }
+        
+        return render(request, 'payment_success.html', context)
 
     except razorpay.errors.SignatureVerificationError:
-        messages.error(request, "Payment verification failed. Please contact support.")
         return render(request, 'payment_failed.html')
-    except Exception as e:
-        messages.error(request, "An unexpected error occurred.")
-        return redirect('pricing')
-    
+

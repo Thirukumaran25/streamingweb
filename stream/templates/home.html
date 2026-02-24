@@ -13,7 +13,7 @@
         <div class="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"></div>
     </div>
 
-    <div class="relative z-10 flex flex-col justify-center h-full px-6 md:px-16 max-w-3xl text-white">
+    <div class="relative z-10 flex flex-col justify-center py-4 lg:py-20 h-full px-6 md:px-16 max-w-3xl text-white">
 
         <h1 class="text-4xl md:text-6xl font-extrabold mb-4">
             {{ featured.title }}
@@ -30,23 +30,26 @@
         <div class="flex gap-4">
 
             <a href="{% url 'play_movie' featured.id %}"
-               class="bg-white text-black px-6 py-3 rounded font-bold flex items-center gap-2">
+               class="bg-[#FFA629] text-white px-6 py-3 rounded font-bold flex items-center gap-2">
                 <i class="bx bx-play"></i> Play
             </a>
 
             {% if user.is_authenticated %}
-            <button 
-                onclick="toggleMyList({{ featured.id }}, this)" 
-                class="px-6 py-3 rounded font-bold flex items-center gap-2 transition-colors duration-300
-                {% if featured.id in my_list_ids %} bg-green-600 {% else %} bg-gray-600 {% endif %} text-white">
-                
-                {% if featured.id in my_list_ids %}
-                    <i class="bx bx-check"></i> <span>Added</span>
-                {% else %}
-                    <i class="bx bx-plus"></i> <span>My List</span>
-                {% endif %}
-            </button>
-
+                <form action="{% url 'toggle_my_list' featured.id %}" method="POST" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-6 py-3 bg-gray-700 rounded font-bold flex items-center group transition-all duration-300 transform active:scale-125 flex items-center gap-2">
+                        
+                        {% if is_in_list %}
+                            <i class='bx bxs-bookmark text-red-600 text-3xl drop-shadow-[0_0_8px_rgba(220,38,38,0.5)]'></i>
+                            <span class="text-sm font-bold text-red-500">In My List</span>
+                        {% else %}
+                             <i class="bx bx-plus"></i> 
+                            <span class="text-sm font-bold text-gray-300 text-white">Add to List</span>
+                        {% endif %}
+                        
+                    </button>
+                </form>
             {% endif %}
 
         </div>
@@ -88,7 +91,7 @@
 
 <section class="relative group">
     <h2 class="text-white text-lg font-bold mb-4">TV Shows</h2>
-    
+    {% if tv_shows %}
     <div class="relative">
         <button onclick="scrollContainer('tv-scroll', -400)" 
                 class="scroll-btn left-0 z-30 opacity-100">
@@ -112,8 +115,10 @@
             <i class="bx bx-chevron-right text-2xl"></i>
         </button>
     </div>
+    {% else %}
+    <p class="text-gray-400">Your list is empty.</p>
+    {% endif %}
 </section>
-
 
 <section class="relative group">
     <div class="flex justify-between mb-4">
@@ -195,36 +200,6 @@ function scrollContainer(containerId, scrollAmount) {
     }
 }
 
-function toggleMyList(id, button) {
-    // Get the CSRF token from cookies
-    const csrftoken = document.cookie.split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-
-    fetch(`/toggle_my_list/${id}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        // Toggle UI based on response
-        if (data.added) {
-            // STATE: MOVIE ADDED
-            button.classList.remove("bg-gray-600");
-            button.classList.add("bg-green-600");
-            button.innerHTML = '<i class="bx bx-check"></i> <span>Added</span>';
-        } else {
-            // STATE: MOVIE REMOVED
-            button.classList.remove("bg-green-600");
-            button.classList.add("bg-gray-600");
-            button.innerHTML = '<i class="bx bx-plus"></i> <span>My List</span>';
-        }
-    })
-    .catch(err => console.error("Error toggling list:", err));
-}
 </script>
 
 <style>

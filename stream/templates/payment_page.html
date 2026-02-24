@@ -7,30 +7,20 @@
         Subscribed to the {{ plan.name }} plan
     </h1>
     <p class="text-white font-semibold text-2xl mb-12">
-        ₹{{ display_amount }}/month
+        ₹{{ display_amount }}
     </p>
 
     <button id="pay-btn" class="w-full max-w-lg bg-[#FFA52F] text-white font-bold py-4 rounded-xl text-xl hover:bg-[#FF9500] transition shadow-lg">
         Pay ₹{{ display_amount }} with Razorpay
     </button>
 
-    <div class="my-8 text-[#FFA52F] font-bold text-lg">Or</div>
-
-    <div class="w-full max-w-6xl">
-        <input type="email" value="{{ user.email }}" placeholder="Email" 
-               class="w-full p-4 rounded-lg bg-[#E5E5E5] text-zinc-800 placeholder-zinc-500 focus:outline-none border-none text-lg">
-    </div>
-
-    <div class="w-full max-w-6xl mt-10">
-        <h2 class="text-[#FFA52F] font-bold text-4xl text-left uppercase tracking-tight">Payment Method</h2>
-    </div>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     var options = {
         "key": "{{ razorpay_key }}", 
-        "amount": "{{ amount }}", // Dynamic amount in paise passed from view
+        "amount": "{{ amount }}",
         "currency": "INR",
         "name": "Streaming Star",
         "description": "{{ plan.name }} Subscription",

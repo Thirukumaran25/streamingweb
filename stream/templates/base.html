@@ -1,154 +1,143 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Streaming Star{% endblock %}</title>
+    <link rel="icon" href="{% static 'logo.png' %}" type="image/png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Outfit:wght@500;800&display=swap" rel="stylesheet">
 
     <style>
-        *{  margin: 0;
-            padding:0;
-            box_sizing: border-box;
-            font-family: Inter, Roboto, sans-serif;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: black; color: white; overflow-x: hidden; }
+        #navLinks, #userSection { transition: opacity 0.3s ease-in-out; }
+        #searchContainer { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Mobile Breakpoint for Logo Text */
+        @media (max-width: 450px) { .logo-text { display: none; } }
+
+        #navSearchInput {
+            white-space: nowrap;
+            height: 100%;
+        }
+
+        /* Force the search bar to stay black/legible when expanded */
+        .search-active {
+            width: 100% !important;
+            opacity: 1 !important;
+            color: #000000 !important;
+            display: block !important;
+            padding-left: 0.5rem;
         }
     </style>
 </head>
 
 <body class="min-h-screen flex flex-col">
 
-<div id="searchOverlay" class="fixed inset-0 z-[100] search-glass hidden flex-col items-center pt-24 px-6">
-    <button id="closeSearch" class="absolute top-8 right-8 text-white text-4xl hover:text-yellow-400 transition">
+<div id="mobileMenu" class="fixed inset-0 bg-black z-[70] hidden flex-col pt-20 px-8 transition-all duration-300">
+    <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-4xl text-white hover:text-[#FFA629] transition">
         <i class='bx bx-x'></i>
     </button>
+    <nav class="flex flex-col gap-6 text-xl font-black uppercase tracking-[0.2em]">
+        <a href="/" onclick="toggleMobileMenu()" class="{% if request.path == '/' %}text-[#FFA629]{% else %}text-white{% endif %}">Home</a>
+        <a href="/movies/" onclick="toggleMobileMenu()" class="{% if '/movies/' in request.path %}text-[#FFA629]{% else %}text-white{% endif %}">Movies</a>
+        <a href="/tv-shows/" onclick="toggleMobileMenu()" class="{% if '/tv-shows/' in request.path %}text-[#FFA629]{% else %}text-white{% endif %}">TV Shows</a>
+        {% if user.is_authenticated %}
+        <a href="/my-list/" onclick="toggleMobileMenu()" class="{% if '/my-list/' in request.path %}text-[#FFA629]{% else %}text-white{% endif %}">My List</a>
+        {% endif %}
+        <a href="/genres/" onclick="toggleMobileMenu()" class="{% if '/genres/' in request.path %}text-[#FFA629]{% else %}text-white{% endif %}">Genres</a>
+        
+        <div class="border-t border-white/10 pt-8 mt-4">
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="flex items-center gap-3 text-red-500"><i class='bx bx-log-out'></i> Logout</a>
+            {% else %}
+                <div class="flex flex-col gap-4">
+                    <a href="{% url 'login' %}" class="text-center border border-white/20 py-3 rounded text-white">Login</a>
+                    <a href="{% url 'register' %}" class="bg-[#FFA629] text-black text-center py-3 rounded font-bold">Sign Up</a>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+</div>
 
-    <div class="w-full max-w-4xl">
-        <div class="relative flex items-center border-b-2 border-white/20 focus-within:border-yellow-400 transition-colors">
-            <i class='bx bx-search text-3xl text-gray-400 mr-4'></i>
-            <input type="text" id="searchInput" autocomplete="off"
-                   placeholder="SEARCH TITLES, GENRES, OR ACTORS..." 
-                   class="w-full bg-transparent py-6 text-4xl md:text-5xl font-black text-white outline-none uppercase tracking-tighter italic">
+<header class="w-full border-b border-white/10 px-4 md:px-10 py-4 flex items-center justify-between sticky top-0 bg-black z-50">
+    <div class="flex items-center gap-2 md:gap-8 flex-1">
+        <div id="navLinks" class="flex items-center gap-8 shrink-0">
+            <a href="/" class="flex items-center gap-2 text-[#FFA629] font-bold text-base md:text-lg tracking-tighter italic whitespace-nowrap">
+                <img src="{% static 'logo.png' %}" alt="" class="h-6 md:h-8 w-auto" onerror="this.style.display='none'">
+                <span class="logo-text">STREAMINGSTAR</span>
+            </a>
+
+            <nav class="hidden lg:flex gap-8 text-[11px] font-black uppercase tracking-widest">
+                <a href="/" class="transition {% if request.path == '/' %}text-[#FFA629]{% else %}text-gray-300 hover:text-white{% endif %}">Home</a>
+                <a href="/movies/" class="transition {% if '/movies/' in request.path %}text-[#FFA629]{% else %}text-gray-300 hover:text-white{% endif %}">Movies</a>
+                <a href="/tv-shows/" class="transition {% if '/tv-shows/' in request.path %}text-[#FFA629]{% else %}text-gray-300 hover:text-white{% endif %}">TV Shows</a>
+                {% if user.is_authenticated %}
+                <a href="/my-list/" class="transition {% if '/my-list/' in request.path %}text-[#FFA629]{% else %}text-gray-300 hover:text-white{% endif %}">My List</a>
+                {% endif %}
+                <a href="/genres/" class="transition {% if '/genres/' in request.path %}text-[#FFA629]{% else %}text-gray-300 hover:text-white{% endif %}">Genres</a>
+            </nav>
         </div>
 
-        <div id="suggestionBox" class="w-full flex flex-wrap gap-3 mt-8"></div>
+        <div id="searchContainer" class="relative flex flex-row-reverse items-center w-10 h-10 md:w-12 md:h-12 bg-transparent rounded-full border border-white/10 ml-auto transition-all duration-500 ease-in-out z-50">
+            <button id="searchToggle" class="relative text-xl md:text-2xl text-white hover:text-[#FFA629] transition p-2 min-w-[40px] z-30">
+                <i class='bx bx-search' id="searchIcon"></i>
+            </button>
+            
+            <input type="text" id="navSearchInput" placeholder="SEARCH TITLES..."
+            class="relative bg-transparent border-none outline-none text-black text-[12px] md:text-sm font-bold uppercase tracking-widest 
+            w-0 opacity-0 transition-all duration-500 placeholder-gray-500 italic flex-1 min-w-0 z-20">
 
-        <div id="searchResults" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-12 overflow-y-auto max-h-[65vh] no-scrollbar pb-10">
+            <div id="navSearchResults" class="absolute top-full right-0 mt-4 w-[85vw] md:w-[500px] bg-zinc-900 border border-white/10 rounded-xl shadow-2xl hidden overflow-hidden max-h-[70vh] overflow-y-auto no-scrollbar z-[100]">
+                <div id="navResultsList"></div>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="mobileMenu" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col pt-24 px-6 transition-all duration-300">
-    <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-3xl text-white hover:text-yellow-400 transition">
-        <i class='bx bx-x'></i>
-    </button>
-    
-    <nav class="flex flex-col gap-6 text-lg font-bold uppercase tracking-widest">
-        <a href="/" onclick="toggleMobileMenu()" class="hover:text-yellow-400 transition py-2 border-b border-white/10">Home</a>
-        <a href="/movies/" onclick="toggleMobileMenu()" class="hover:text-yellow-400 transition py-2 border-b border-white/10">Movies</a>
-        <a href="/tv-shows/" onclick="toggleMobileMenu()" class="hover:text-yellow-400 transition py-2 border-b border-white/10">TV Shows</a>
-        <a href="/my-list/" onclick="toggleMobileMenu()" class="hover:text-yellow-400 transition py-2 border-b border-white/10">My List</a>
-        <a href="/genres/" onclick="toggleMobileMenu()" class="hover:text-yellow-400 transition py-2 border-b border-white/10">Genres</a>
-        
+    <div id="userSection" class="flex items-center gap-2 md:gap-4 ml-2 shrink-0">
         {% if user.is_authenticated %}
-        <div class="border-t border-white/20 pt-6 mt-4 space-y-4">
-            <a href="/profile/" onclick="toggleMobileMenu()" class="flex items-center gap-3 hover:text-yellow-400 transition">
-                <i class='bx bx-user text-xl'></i> Profile
-            </a>
-            <a href="/subscription/" onclick="toggleMobileMenu()" class="flex items-center gap-3 hover:text-yellow-400 transition">
-                <i class='bx bx-credit-card text-xl'></i> Subscription
-            </a>
-            <a href="{% url 'logout' %}" class="flex items-center gap-3 text-red-400 hover:text-red-300 transition">
-                <i class='bx bx-log-out text-xl'></i> Logout
-            </a>
-        </div>
+            <div class="relative" id="profileDropdown">
+                <button onclick="toggleProfileMenu()" class="flex items-center gap-1 focus:outline-none p-1 rounded-lg hover:bg-white/5 transition">
+                    <div class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold uppercase text-xs">
+                        {{ user.username|slice:":1" }}
+                    </div>
+                    <i class='bx bx-chevron-down text-gray-400 text-sm'></i>
+                </button>
+                <div id="profileMenu" class="absolute right-0 mt-3 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl hidden overflow-hidden">
+                    <a href="/profile/" class="flex items-center gap-3 px-4 py-3 text-xs font-bold text-white hover:bg-zinc-800 transition"><i class='bx bx-user'></i> PROFILE</a>
+                    <a href="/subscription/" class="flex items-center gap-3 px-4 py-3 text-xs font-bold hover:bg-zinc-800 transition">
+                        <i class='bx bx-credit-card text-white text-lg'></i> 
+                        <span class='text-white'>SUBSCRIPTION</span>
+                    </a>
+                    <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-400 hover:bg-zinc-800 transition border-t border-white/5"><i class='bx bx-log-out'></i> LOGOUT</a>
+                </div>
+            </div>
         {% else %}
-        <div class="border-t border-white/20 pt-6 mt-4 flex flex-col gap-4">
-            <a href="{% url 'login' %}" onclick="toggleMobileMenu()" class="text-center border border-white/30 py-3 rounded hover:bg-white/10 transition">Login</a>
-            <a href="{% url 'register' %}" onclick="toggleMobileMenu()" class="bg-yellow-400 text-black text-center py-3 rounded font-bold hover:bg-yellow-300 transition">Sign Up</a>
-        </div>
+            <div class="hidden sm:flex items-center gap-4">
+                <a href="{% url 'login' %}" class="text-[10px] font-bold uppercase text-gray-300 hover:text-white tracking-widest">Login</a>
+                <a href="{% url 'register' %}" class="bg-[#FFA629] text-black px-5 py-2 rounded font-black text-[10px] uppercase tracking-widest transition">Sign Up</a>
+            </div>
         {% endif %}
-    </nav>
-</div>
 
-<header class="w-full border-b border-white/10 px-6 md:px-16 py-4 flex items-center justify-between sticky top-0 bg-black z-50">
-
-  <div class="flex items-center gap-8">
-    <a href="/" class="flex items-center gap-2 text-yellow-400 font-bold text-lg tracking-tighter italic">
-      <i class='bx bxs-star'></i>
-      STREAMINGSTAR
-    </a>
-
-    <nav class="hidden md:flex gap-8 text-[11px] text-gray-300 font-black uppercase tracking-widest">
-      <a href="/" class="hover:text-white transition">Home</a>
-      <a href="/movies/" class="hover:text-white transition">Movies</a>
-      <a href="/tv-shows/" class="hover:text-white transition">TV Shows</a>
-      <a href="/my-list/" class="hover:text-white transition">My List</a>
-      <a href="/genres/" class="hover:text-white transition">Genres</a>
-    </nav>
-  </div>
-
-  <div class="flex items-center gap-3">
-
-    <button id="openSearch" class="text-2xl text-white hover:text-yellow-400 transition p-2 rounded-lg hover:bg-white/5">
-        <i class='bx bx-search'></i>
-    </button>
-
-    {% if user.is_authenticated %}
-      <div class="relative" id="profileDropdown">
-        <button onclick="toggleProfileMenu()" class="flex items-center gap-2 focus:outline-none p-1 rounded-lg hover:bg-white/5 transition">
-          <div class="w-8 h-8 rounded bg-yellow-400 text-black flex items-center justify-center font-bold uppercase text-xs">
-            {{ user.username|slice:":1" }}
-          </div>
-          <i class='bx bx-chevron-down text-gray-400'></i>
+        <button onclick="toggleMobileMenu()" class="lg:hidden text-3xl text-white hover:text-[#FFA629] transition p-1">
+            <i class='bx bx-menu'></i>
         </button>
-
-        <div id="profileMenu" class="absolute right-0 mt-3 w-56 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl hidden overflow-hidden dropdown-enter">
-          <div class="px-4 py-3 border-b border-white/10 bg-zinc-800/50">
-            <p class="text-sm font-bold text-white uppercase">{{ user.username }}</p>
-            <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
-          </div>
-          
-          <div class="py-2">
-            <a href="/profile/" class="flex items-center gap-3 px-4 py-3 text-xs font-bold hover:bg-zinc-800 transition">
-              <i class='bx bx-user text-gray-400 text-lg'></i> 
-              <span>PROFILE</span>
-            </a>
-            <a href="/subscription/" class="flex items-center gap-3 px-4 py-3 text-xs font-bold hover:bg-zinc-800 transition">
-              <i class='bx bx-credit-card text-gray-400 text-lg'></i> 
-              <span>SUBSCRIPTION</span>
-            </a>
-          </div>
-          
-          <div class="border-t border-white/10 pt-2 pb-2">
-            <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-400 hover:bg-zinc-800 transition">
-              <i class='bx bx-log-out text-lg'></i> 
-              <span>LOGOUT</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    {% else %}
-      <a href="{% url 'login' %}" class="hidden sm:inline text-xs font-bold uppercase text-gray-300 hover:text-white tracking-widest mr-2">Login</a>
-      <a href="{% url 'register' %}" class="bg-yellow-400 text-black px-5 py-2 rounded font-black text-xs uppercase tracking-widest hover:bg-yellow-300 transition">Sign Up</a>
-    {% endif %}
-
-    <button id="menuBtn" onclick="toggleMobileMenu()" class="md:hidden text-2xl text-white hover:text-yellow-400 transition p-2 rounded-lg hover:bg-white/5">
-      <i class='bx bx-menu'></i>
-    </button>
-  </div>
+    </div>
 </header>
 
 <main class="flex-grow">
   {% block content %}{% endblock %}
 </main>
 
-<footer class="px-6 md:px-16 py-20 border-t border-white/5 bg-black">
-
+<footer class="px-6 md:px-12 py-20 border-t border-white/5 bg-black">
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 text-[11px] text-gray-400 uppercase font-bold tracking-widest">
-
         <div>
             <h4 class="text-white mb-6 font-black">Company</h4>
             <ul class="space-y-3">
@@ -220,18 +209,31 @@
                 <li class="hover:text-white cursor-pointer transition">Terms & Privacy</li>
                 <li class="hover:text-white cursor-pointer transition">Help & Support</li>
             </ul>
+
         </div>
+
+
 
     </div>
 
+
+
     <div class="mt-20 border-t border-white/10 pt-8 flex flex-col items-center gap-8 text-gray-500 text-[10px] uppercase font-bold tracking-widest">
-        
+
+       
+
         <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-center">
+
             <span>Copyright © 2026 Streaming Star</span>
+
             <span class="hover:text-white cursor-pointer transition">Privacy policy</span>
+
             <span class="hover:text-white cursor-pointer transition">Ad choices</span>
+
             <span class="hover:text-white cursor-pointer transition">Accessibility</span>
+
             <span class="hover:text-white cursor-pointer transition">Manage cookies</span>
+
         </div>
 
         <div class="flex gap-8 text-2xl">
@@ -241,164 +243,134 @@
             <i class='bx bxl-tumblr hover:text-blue-800 transition cursor-pointer'></i>
             <i class='bx bxl-facebook-square hover:text-blue-600 transition cursor-pointer'></i>
             <i class='bx bxl-twitter hover:text-sky-400 transition cursor-pointer'></i>
+
         </div>
-
     </div>
-
 </footer>
 
 <script>
-    // --- Profile Dropdown Functionality ---
     function toggleProfileMenu() {
         const menu = document.getElementById('profileMenu');
         menu.classList.toggle('hidden');
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
         const dropdown = document.getElementById('profileDropdown');
         const menu = document.getElementById('profileMenu');
-        
         if (dropdown && !dropdown.contains(event.target)) {
             menu.classList.add('hidden');
         }
     });
 
-    // Close dropdown when pressing Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            const menu = document.getElementById('profileMenu');
-            const mobileMenu = document.getElementById('mobileMenu');
-            const searchOverlay = document.getElementById('searchOverlay');
-            
-            if (menu) menu.classList.add('hidden');
-            if (mobileMenu) mobileMenu.classList.add('hidden');
-            if (searchOverlay && !searchOverlay.classList.contains('hidden')) {
-                searchOverlay.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }
-        }
-    });
-
-    // --- Mobile Menu Toggle ---
     function toggleMobileMenu() {
         const mobileMenu = document.getElementById('mobileMenu');
         mobileMenu.classList.toggle('hidden');
-        
-        // Prevent body scroll when mobile menu is open
-        if (!mobileMenu.classList.contains('hidden')) {
-            document.body.style.overflow = 'hidden';
+        document.body.style.overflow = mobileMenu.classList.contains('hidden') ? 'auto' : 'hidden';
+    }
+
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 50) {
+            header.classList.replace('bg-black', 'bg-black/95');
+            header.classList.add('backdrop-blur-md');
         } else {
-            document.body.style.overflow = 'auto';
+            header.classList.replace('bg-black/95', 'bg-black');
+            header.classList.remove('backdrop-blur-md');
         }
-    }
-
-    // --- Search Logic ---
-    const openSearch = document.getElementById('openSearch');
-    const closeSearch = document.getElementById('closeSearch');
-    const searchOverlay = document.getElementById('searchOverlay');
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    const suggestionBox = document.getElementById('suggestionBox');
-    let debounceTimer;
-
-    openSearch.addEventListener('click', () => {
-        searchOverlay.classList.remove('hidden');
-        searchInput.focus();
-        document.body.style.overflow = 'hidden';
     });
 
-    closeSearch.addEventListener('click', () => {
-        searchOverlay.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+    // Search Logic
+    const searchContainer = document.getElementById('searchContainer');
+    const searchToggle = document.getElementById('searchToggle');
+    const navSearchInput = document.getElementById('navSearchInput');
+    const navSearchResults = document.getElementById('navSearchResults');
+    const navResultsList = document.getElementById('navResultsList');
+    const navLinks = document.getElementById('navLinks');
+    const userSection = document.getElementById('userSection');
+    
+    let isSearchOpen = false;
+    let navDebounce;
+
+    searchToggle.addEventListener('click', (e) => {
+        if (!isSearchOpen) {
+            e.preventDefault();
+            navLinks.classList.add('opacity-0', 'pointer-events-none');
+            
+            searchContainer.classList.add('bg-white', 'px-4');
+            if (window.innerWidth < 1024) {
+                userSection.classList.add('opacity-0', 'pointer-events-none');
+                searchContainer.style.width = "calc(100% - 1rem)";
+            } else {
+                searchContainer.style.width = "400px";
+            }
+            
+            navSearchInput.classList.remove('opacity-0','w-0');
+            navSearchInput.classList.add('w-full','text-black');
+            searchToggle.classList.add('text-black');
+            searchToggle.classList.remove('text-white');
+            
+            navSearchInput.focus();
+            isSearchOpen = true;
+        } else if (navSearchInput.value === "") {
+            closeSearchBar();
+        }
     });
 
-    // Helper to click suggestion
-    function fillSearch(text) {
-        searchInput.value = text;
-        searchInput.dispatchEvent(new Event('input'));
+    function closeSearchBar() {
+        navLinks.classList.remove('opacity-0', 'pointer-events-none');
+        userSection.classList.remove('opacity-0', 'pointer-events-none');
+        
+        searchContainer.classList.remove('bg-white','px-4');
+        searchContainer.style.width = ""; // Reset to CSS default
+        
+        navSearchInput.classList.add('opacity-0','w-0');
+        navSearchInput.classList.remove('w-full');
+        searchToggle.classList.remove('text-black');
+        searchToggle.classList.add('text-white');
+        
+        navSearchInput.value = "";
+        navSearchResults.classList.add('hidden');
+        isSearchOpen = false;
     }
 
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
+    document.addEventListener('click', (e) => {
+        if (isSearchOpen && !searchContainer.contains(e.target)) {
+            closeSearchBar();
+        }
+    });
+
+    navSearchInput.addEventListener('input', (e) => {
         const query = e.target.value.trim();
+        executeSearch(query);
+    });
 
+    function executeSearch(query) {
+        clearTimeout(navDebounce);
         if (query.length > 1) {
-            // 1. Fetch suggestions instantly
-            fetch(`/api/suggestions/?q=${query}`)
+            navDebounce = setTimeout(() => {
+                fetch(`/api/search/?q=${query}`)
                 .then(res => res.json())
                 .then(data => {
-                    suggestionBox.innerHTML = data.suggestions.map(s => `
-                        <button onclick="fillSearch('${s}')" class="bg-white/10 hover:bg-yellow-400 hover:text-black px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition">
-                            ${s}
-                        </button>
-                    `).join('');
+                    navSearchResults.classList.remove('hidden');
+                    if (data.results && data.results.length > 0) {
+                        navResultsList.innerHTML = data.results.map(movie => `
+                            <a href="/movies/${movie.imdbID}/" class="flex items-center gap-4 p-4 hover:bg-white/5 transition border-b border-white/5 last:border-0">
+                                <img src="${movie.Poster}" class="w-12 h-16 object-cover rounded shadow" onerror="this.src='https://via.placeholder.com/100x150?text=No+Image'">
+                                <div class="overflow-hidden text-left">
+                                    <p class="text-[11px] font-black text-white uppercase tracking-tighter truncate w-48">${movie.Title}</p>
+                                    <p class="text-[9px] text-gray-500 font-bold uppercase">${movie.Year}</p>
+                                </div>
+                            </a>
+                        `).join('');
+                    } else {
+                        navResultsList.innerHTML = `<p class="p-8 text-[10px] text-center text-gray-500 font-black uppercase tracking-widest">No matching titles</p>`;
+                    }
                 });
-
-            // 2. Fetch full results with debounce
-            debounceTimer = setTimeout(() => {
-                fetch(`/api/search/?q=${query}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.results && data.results.length > 0) {
-                            searchResults.innerHTML = data.results.map(movie => `
-                                <a href="/movie/${movie.imdbID}" class="group">
-                                    <div class="aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-yellow-400 transition duration-500 bg-zinc-900">
-                                        <img src="${movie.Poster}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" onerror="this.src='https://via.placeholder.com/300x450?text=NO+POSTER'">
-                                    </div>
-                                    <p class="mt-3 text-[10px] font-black uppercase tracking-tighter text-zinc-400 group-hover:text-yellow-400 transition">
-                                        ${movie.Title}
-                                    </p>
-                                </a>
-                            `).join('');
-                        } else {
-                            searchResults.innerHTML = `<p class="col-span-full text-center text-zinc-500 uppercase font-black">No results found</p>`;
-                        }
-                    });
             }, 300);
         } else {
-            suggestionBox.innerHTML = '';
-            searchResults.innerHTML = '';
+            navSearchResults.classList.add('hidden');
         }
-    });
-
-    // Close search when clicking outside
-    searchOverlay.addEventListener('click', (e) => {
-        if (e.target === searchOverlay) {
-            searchOverlay.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-    });
-
-    // --- Keyboard Shortcuts ---
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + K to open search
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            searchOverlay.classList.remove('hidden');
-            searchInput.focus();
-            document.body.style.overflow = 'hidden';
-        }
-    });
-
-    // --- Header Scroll Effect ---
-    let lastScroll = 0;
-    const header = document.querySelector('header');
-
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-        
-        if (currentScroll > 50) {
-            header.classList.add('shadow-lg');
-            header.classList.replace('bg-black', 'bg-black/95');
-        } else {
-            header.classList.remove('shadow-lg');
-            header.classList.replace('bg-black/95', 'bg-black');
-        }
-        
-        lastScroll = currentScroll;
-    });
+    }
 </script>
-
 </body>
 </html>

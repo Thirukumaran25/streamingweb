@@ -18,19 +18,19 @@
     </a>
   </div>
 
-  <button onclick="scrollContainer('genre{{ genre.id }}', -400)" 
-          class="scroll-btn left-2 opacity-100">
-    <i class="bx bx-chevron-left text-2xl"></i>
-  </button>
   
-  <button onclick="scrollContainer('genre{{ genre.id }}', 400)" 
-          class="scroll-btn right-2 opacity-100">
-    <i class="bx bx-chevron-right text-2xl"></i>
-  </button>
-
   <div id="genre{{ genre.id }}" class="scroll-row">
-
+    
     {% for movie in genre.movie_set.all %}
+    <button onclick="scrollContainer('genre{{ genre.id }}', -400)" 
+            class="scroll-btn left-2 opacity-100">
+      <i class="bx bx-chevron-left text-2xl"></i>
+    </button>
+    
+    <button onclick="scrollContainer('genre{{ genre.id }}', 400)" 
+            class="scroll-btn right-2 opacity-100">
+      <i class="bx bx-chevron-right text-2xl"></i>
+    </button>
     <a href="{% url 'movie_detail' movie.id %}" class="movie-card flex-shrink-0">
 
       <div class="poster-wrapper rounded-lg overflow-hidden border border-white/10">

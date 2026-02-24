@@ -31,5 +31,5 @@ urlpatterns = [
     path("subscription/", subscription, name="subscription"),
     path("payment_page/<str:plan_name>/", payment_page, name="payment_page"),
     path("create_subscription_order/", create_subscription_order, name="create_subscription_order"),
-    path("payment_verify/", payment_verify, name="payment_verify"),
+    path("payment-verify/", payment_verify, name="payment_verify"),
 ]
